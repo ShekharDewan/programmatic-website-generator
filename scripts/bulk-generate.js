@@ -1,230 +1,329 @@
-const { generatePost } = require('./generate-content')
+const fs = require('fs-extra')
+const path = require('path')
+const slugify = require('slugify')
 
-// Predefined content scenarios for bulk generation
-const CONTENT_SCENARIOS = [
-  { topic: 'React Hooks', type: 'tutorial', tags: ['react', 'javascript', 'tutorial'] },
-  { topic: 'Node.js Performance', type: 'guide', tags: ['nodejs', 'performance', 'backend'] },
-  { topic: 'GraphQL API Design', type: 'tutorial', tags: ['graphql', 'api', 'backend'] },
-  { topic: 'TypeScript Best Practices', type: 'guide', tags: ['typescript', 'javascript', 'best-practices'] },
-  { topic: 'Docker Containerization', type: 'tutorial', tags: ['docker', 'devops', 'containers'] },
-  { topic: 'AWS Lambda Functions', type: 'guide', tags: ['aws', 'serverless', 'cloud'] },
-  { topic: 'CSS Grid Layout', type: 'tutorial', tags: ['css', 'frontend', 'layout'] },
-  { topic: 'Database Optimization', type: 'guide', tags: ['database', 'performance', 'sql'] },
-  { topic: 'Microservices Architecture', type: 'guide', tags: ['architecture', 'microservices', 'backend'] },
-  { topic: 'Vue.js Composition API', type: 'tutorial', tags: ['vue', 'javascript', 'tutorial'] },
-  { topic: 'Kubernetes Deployment', type: 'guide', tags: ['kubernetes', 'devops', 'deployment'] },
-  { topic: 'Python Data Analysis', type: 'tutorial', tags: ['python', 'data-science', 'analysis'] },
-  { topic: 'Machine Learning Basics', type: 'guide', tags: ['ml', 'ai', 'python'] },
-  { topic: 'REST API Security', type: 'guide', tags: ['api', 'security', 'backend'] },
-  { topic: 'Progressive Web Apps', type: 'tutorial', tags: ['pwa', 'javascript', 'mobile'] },
-  { topic: 'Redis Caching Strategies', type: 'guide', tags: ['redis', 'caching', 'performance'] },
-  { topic: 'Webpack Configuration', type: 'tutorial', tags: ['webpack', 'javascript', 'build-tools'] },
-  { topic: 'MongoDB Aggregation', type: 'tutorial', tags: ['mongodb', 'database', 'nosql'] },
-  { topic: 'CI/CD Pipelines', type: 'guide', tags: ['ci-cd', 'devops', 'automation'] },
-  { topic: 'Next.js App Router', type: 'tutorial', tags: ['nextjs', 'react', 'routing'] },
-  { topic: 'Testing Strategies', type: 'guide', tags: ['testing', 'javascript', 'best-practices'] },
-  { topic: 'Blockchain Development', type: 'tutorial', tags: ['blockchain', 'cryptocurrency', 'web3'] },
-  { topic: 'Svelte Framework', type: 'guide', tags: ['svelte', 'javascript', 'frontend'] },
-  { topic: 'Serverless Architecture', type: 'guide', tags: ['serverless', 'cloud', 'architecture'] },
-  { topic: 'GraphQL Federation', type: 'tutorial', tags: ['graphql', 'microservices', 'api'] }
+// Content scenarios focused on programming and web development
+const contentScenarios = [
+  {
+    title: "Getting Started with Next.js 14 App Router",
+    excerpt: "Learn the fundamentals of Next.js 14's new App Router and build your first modern web application with server components.",
+    tags: ["nextjs", "react", "web-development", "app-router"],
+    author: "John Doe"
+  },
+  {
+    title: "Advanced TypeScript Patterns for React",
+    excerpt: "Explore advanced TypeScript patterns and techniques for building type-safe React applications with better developer experience.",
+    tags: ["typescript", "react", "javascript", "patterns"],
+    author: "Jane Smith"
+  },
+  {
+    title: "Building Scalable REST APIs with Node.js",
+    excerpt: "Design and implement scalable REST APIs using Node.js, Express, and modern best practices for enterprise applications.",
+    tags: ["nodejs", "api", "backend", "express"],
+    author: "Mike Johnson"
+  },
+  {
+    title: "Modern CSS Grid and Flexbox Techniques",
+    excerpt: "Master modern CSS layout techniques including Grid, Flexbox, and container queries for responsive web design.",
+    tags: ["css", "frontend", "web-design", "responsive"],
+    author: "Sarah Wilson"
+  },
+  {
+    title: "Database Design Best Practices with PostgreSQL",
+    excerpt: "Learn essential database design principles and optimization techniques for building efficient PostgreSQL databases.",
+    tags: ["database", "postgresql", "backend", "optimization"],
+    author: "David Brown"
+  },
+  {
+    title: "React Performance Optimization Guide",
+    excerpt: "Comprehensive guide to optimizing React applications including memoization, code splitting, and bundle analysis.",
+    tags: ["react", "performance", "optimization", "javascript"],
+    author: "Emily Chen"
+  },
+  {
+    title: "Introduction to GraphQL with Apollo",
+    excerpt: "Get started with GraphQL and Apollo Client to build efficient, type-safe APIs for modern web applications.",
+    tags: ["graphql", "apollo", "api", "javascript"],
+    author: "Alex Rodriguez"
+  },
+  {
+    title: "Docker Containerization for Web Developers",
+    excerpt: "Learn how to containerize your web applications with Docker for consistent development and deployment environments.",
+    tags: ["docker", "devops", "containers", "deployment"],
+    author: "Lisa Park"
+  },
+  {
+    title: "Testing React Applications with Jest and Testing Library",
+    excerpt: "Complete guide to testing React components and applications using Jest, React Testing Library, and best practices.",
+    tags: ["testing", "react", "jest", "javascript"],
+    author: "Tom Anderson"
+  },
+  {
+    title: "State Management in React: Redux vs Zustand",
+    excerpt: "Compare different state management solutions for React applications and learn when to use each approach.",
+    tags: ["react", "state-management", "redux", "javascript"],
+    author: "Maria Garcia"
+  },
+  {
+    title: "Building Progressive Web Apps with Next.js",
+    excerpt: "Transform your Next.js application into a Progressive Web App with service workers, offline support, and app-like features.",
+    tags: ["pwa", "nextjs", "web-development", "service-workers"],
+    author: "Chris Taylor"
+  },
+  {
+    title: "Authentication and Authorization in Node.js",
+    excerpt: "Implement secure authentication and authorization in Node.js applications using JWT, OAuth, and modern security practices.",
+    tags: ["nodejs", "authentication", "security", "backend"],
+    author: "Rachel Green"
+  },
+  {
+    title: "CSS-in-JS: Styled Components vs Emotion",
+    excerpt: "Explore CSS-in-JS solutions for React applications and compare the benefits of Styled Components and Emotion.",
+    tags: ["css-in-js", "react", "styled-components", "frontend"],
+    author: "Jordan Lee"
+  },
+  {
+    title: "Serverless Functions with Vercel and Netlify",
+    excerpt: "Deploy and manage serverless functions using Vercel and Netlify for scalable backend functionality.",
+    tags: ["serverless", "vercel", "netlify", "backend"],
+    author: "Kevin Wong"
+  },
+  {
+    title: "Web Accessibility Best Practices",
+    excerpt: "Create inclusive web applications by implementing accessibility best practices and WCAG guidelines.",
+    tags: ["accessibility", "web-development", "inclusive-design", "frontend"],
+    author: "Sophie Miller"
+  },
+  {
+    title: "Optimizing Web Performance with Core Web Vitals",
+    excerpt: "Improve your website's performance by understanding and optimizing Core Web Vitals metrics.",
+    tags: ["performance", "web-vitals", "optimization", "seo"],
+    author: "Daniel Kim"
+  },
+  {
+    title: "Building Real-time Applications with WebSockets",
+    excerpt: "Create real-time web applications using WebSockets, Socket.io, and modern real-time communication patterns.",
+    tags: ["websockets", "real-time", "nodejs", "javascript"],
+    author: "Amy Liu"
+  },
+  {
+    title: "Version Control Best Practices with Git",
+    excerpt: "Master Git workflows, branching strategies, and collaboration techniques for effective version control.",
+    tags: ["git", "version-control", "collaboration", "development"],
+    author: "Mark Thompson"
+  },
+  {
+    title: "API Documentation with OpenAPI and Swagger",
+    excerpt: "Create comprehensive API documentation using OpenAPI specifications and Swagger tools for better developer experience.",
+    tags: ["api", "documentation", "openapi", "swagger"],
+    author: "Nina Patel"
+  },
+  {
+    title: "Monitoring and Logging in Production Applications",
+    excerpt: "Implement effective monitoring and logging strategies for production web applications using modern tools and practices.",
+    tags: ["monitoring", "logging", "production", "devops"],
+    author: "Robert Davis"
+  }
 ]
 
-// Industry news topics for news-type posts
-const NEWS_TOPICS = [
-  'JavaScript ES2024 Features',
-  'React 19 Release Updates',
-  'TypeScript 5.5 Improvements',
-  'Node.js LTS Updates',
-  'AWS New Services',
-  'Docker Desktop Changes',
-  'VS Code Extensions',
-  'GitHub Copilot Updates',
-  'Chrome DevTools Features',
-  'NPM Security Updates'
-]
-
-async function generateBulkContent(count = 5, options = {}) {
-  const {
-    type = 'mixed', // 'tutorial', 'guide', 'news', or 'mixed'
-    author = 'Content Generator',
-    dryRun = false
-  } = options
+// Function to get random related posts based on tag similarity
+function getRelatedPosts(currentTags, allPosts, currentSlug, maxRelated = 3) {
+  const related = []
   
-  console.log(`🚀 Starting bulk generation of ${count} posts...`)
-  if (dryRun) console.log('📋 DRY RUN MODE - No files will be created')
+  // Find posts with overlapping tags
+  const tagMatches = allPosts
+    .filter(post => post.slug !== currentSlug)
+    .map(post => ({
+      ...post,
+      commonTags: post.tags.filter(tag => currentTags.includes(tag)).length
+    }))
+    .filter(post => post.commonTags > 0)
+    .sort((a, b) => b.commonTags - a.commonTags)
   
-  const results = {
-    success: [],
-    failed: [],
-    skipped: []
+  // Add top tag matches
+  related.push(...tagMatches.slice(0, Math.min(2, tagMatches.length)))
+  
+  // Fill remaining slots with random posts
+  if (related.length < maxRelated) {
+    const remainingPosts = allPosts
+      .filter(post => post.slug !== currentSlug && !related.find(r => r.slug === post.slug))
+    
+    const randomPosts = remainingPosts
+      .sort(() => Math.random() - 0.5)
+      .slice(0, maxRelated - related.length)
+    
+    related.push(...randomPosts)
   }
   
-  for (let i = 0; i < count; i++) {
-    let postOptions = { author }
-    
-    // Determine post type
-    if (type === 'mixed') {
-      const types = ['tutorial', 'guide', 'news']
-      postOptions.type = types[Math.floor(Math.random() * types.length)]
-    } else {
-      postOptions.type = type
-    }
-    
-    // Select content based on type
-    if (postOptions.type === 'news') {
-      postOptions.topic = NEWS_TOPICS[Math.floor(Math.random() * NEWS_TOPICS.length)]
-      postOptions.tags = ['news', 'updates', 'technology']
-    } else {
-      const scenario = CONTENT_SCENARIOS[Math.floor(Math.random() * CONTENT_SCENARIOS.length)]
-      postOptions = { ...postOptions, ...scenario }
-    }
-    
-    console.log(`\n📝 Generating post ${i + 1}/${count}: ${postOptions.topic} (${postOptions.type})`)
-    
-    if (dryRun) {
-      console.log(`   Would create: "${postOptions.topic}" as ${postOptions.type}`)
-      results.success.push({ title: postOptions.topic, type: postOptions.type })
-      continue
-    }
-    
+  return related.slice(0, maxRelated).map(post => post.slug)
+}
+
+// Function to generate a single blog post
+async function generateBlogPost(scenario, index, allScenarios) {
+  const slug = slugify(scenario.title, { lower: true, strict: true })
+  const date = new Date()
+  date.setDate(date.getDate() - Math.floor(Math.random() * 90)) // Random date within last 90 days
+  
+  // Get related posts based on tag similarity
+  const relatedSlugs = getRelatedPosts(
+    scenario.tags, 
+    allScenarios.map((s, i) => ({
+      slug: slugify(s.title, { lower: true, strict: true }),
+      tags: s.tags
+    })),
+    slug
+  )
+  
+  const frontMatter = {
+    title: scenario.title,
+    slug: slug,
+    date: date.toISOString().split('T')[0],
+    excerpt: scenario.excerpt,
+    tags: scenario.tags,
+    related: relatedSlugs,
+    author: scenario.author
+  }
+  
+  // Generate more substantial content based on the topic
+  const content = generateDetailedContent(scenario)
+  
+  const fileContent = `---
+title: "${frontMatter.title}"
+slug: "${frontMatter.slug}"
+date: "${frontMatter.date}"
+excerpt: "${frontMatter.excerpt}"
+tags: [${frontMatter.tags.map(tag => `"${tag}"`).join(', ')}]
+related: [${frontMatter.related.map(slug => `"${slug}"`).join(', ')}]
+author: "${frontMatter.author}"
+---
+
+${content}`
+  
+  const contentDir = path.join(process.cwd(), 'content', 'blog')
+  await fs.ensureDir(contentDir)
+  
+  const filePath = path.join(contentDir, `${slug}.mdx`)
+  await fs.writeFile(filePath, fileContent)
+  
+  console.log(`✅ Generated: ${scenario.title}`)
+  return { slug, ...frontMatter }
+}
+
+// Function to generate detailed content based on the scenario
+function generateDetailedContent(scenario) {
+  const { title, tags, author } = scenario
+  
+  // Generate content sections based on tags and topic
+  let content = `# ${title}\n\n`
+  
+  // Introduction
+  content += `${scenario.excerpt}\n\n`
+  
+  // Main content sections based on tags
+  if (tags.includes('tutorial') || tags.includes('guide')) {
+    content += `## Getting Started\n\n`
+    content += `Before diving into the details, let's establish the foundational concepts you'll need to understand.\n\n`
+    content += `## Step-by-Step Implementation\n\n`
+    content += `Follow these carefully crafted steps to achieve the best results:\n\n`
+    content += `### Step 1: Planning and Preparation\n\n`
+    content += `Proper planning is crucial for success. Take time to understand your requirements and constraints.\n\n`
+    content += `### Step 2: Implementation\n\n`
+    content += `Now that we have a solid plan, let's move to the implementation phase.\n\n`
+    content += `### Step 3: Testing and Optimization\n\n`
+    content += `Testing is not optional. Here's how to ensure your implementation works correctly.\n\n`
+  } else if (tags.includes('business') || tags.includes('strategy')) {
+    content += `## Current Market Landscape\n\n`
+    content += `Understanding the current market conditions is essential for making informed decisions.\n\n`
+    content += `## Key Strategies for Success\n\n`
+    content += `Based on industry research and real-world experience, here are the strategies that work:\n\n`
+    content += `### Strategy 1: Focus on Core Value\n\n`
+    content += `Identify and double down on what makes your approach unique and valuable.\n\n`
+    content += `### Strategy 2: Measure and Iterate\n\n`
+    content += `Continuous improvement through measurement and iteration is key to long-term success.\n\n`
+    content += `## Implementation Roadmap\n\n`
+    content += `Here's a practical roadmap for implementing these strategies in your organization.\n\n`
+  } else if (tags.includes('design') || tags.includes('ux')) {
+    content += `## Design Principles\n\n`
+    content += `Great design is built on solid principles. Let's explore the fundamentals that guide effective design decisions.\n\n`
+    content += `## User-Centered Approach\n\n`
+    content += `Putting users at the center of your design process ensures better outcomes and higher satisfaction.\n\n`
+    content += `## Practical Applications\n\n`
+    content += `Theory is important, but practical application is where real value is created.\n\n`
+    content += `### Case Study: Real-World Implementation\n\n`
+    content += `Let's examine a real-world example of these principles in action.\n\n`
+  } else {
+    // Generic structure for other topics
+    content += `## Understanding the Fundamentals\n\n`
+    content += `To master this topic, we need to start with a solid understanding of the core concepts.\n\n`
+    content += `## Advanced Concepts\n\n`
+    content += `Once you've grasped the basics, these advanced concepts will take your understanding to the next level.\n\n`
+    content += `## Practical Applications\n\n`
+    content += `Knowledge without application is incomplete. Here's how to put these concepts to work.\n\n`
+    content += `## Best Practices\n\n`
+    content += `Learn from the experience of others and avoid common pitfalls with these proven best practices.\n\n`
+  }
+  
+  // Common sections for all posts
+  content += `## Key Takeaways\n\n`
+  content += `Here are the most important points to remember:\n\n`
+  content += `- Focus on understanding the fundamentals before moving to advanced topics\n`
+  content += `- Practice and real-world application are essential for mastery\n`
+  content += `- Stay updated with the latest developments in the field\n`
+  content += `- Connect with the community and learn from others' experiences\n\n`
+  
+  content += `## What's Next?\n\n`
+  content += `This is just the beginning of your journey. Continue learning, experimenting, and sharing your knowledge with others.\n\n`
+  content += `*Have questions or want to share your experience? Connect with me on social media or leave a comment below.*\n\n`
+  
+  return content
+}
+
+// Main function to generate multiple posts
+async function generateBulkContent() {
+  const count = process.argv.includes('--count') 
+    ? parseInt(process.argv[process.argv.indexOf('--count') + 1]) 
+    : contentScenarios.length
+  
+  const selectedScenarios = contentScenarios
+    .sort(() => Math.random() - 0.5) // Randomize order
+    .slice(0, Math.min(count, contentScenarios.length))
+  
+  console.log(`🚀 Generating ${selectedScenarios.length} blog posts...\n`)
+  
+  const generatedPosts = []
+  
+  for (let i = 0; i < selectedScenarios.length; i++) {
     try {
-      const result = generatePost(postOptions)
-      
-      if (result.success) {
-        results.success.push(result)
-        // Add small delay to avoid overwhelming the system
-        await new Promise(resolve => setTimeout(resolve, 100))
-      } else if (result.reason === 'File exists') {
-        results.skipped.push(result)
-        console.log(`   ⏭️  Skipped: ${result.slug} (already exists)`)
-      } else {
-        results.failed.push(result)
-        console.log(`   ❌ Failed: ${result.reason}`)
-      }
+      const post = await generateBlogPost(selectedScenarios[i], i, selectedScenarios)
+      generatedPosts.push(post)
     } catch (error) {
-      results.failed.push({ error: error.message, topic: postOptions.topic })
-      console.log(`   ❌ Error: ${error.message}`)
+      console.error(`❌ Error generating post ${i + 1}:`, error.message)
     }
   }
   
-  // Summary
-  console.log('\n' + '='.repeat(50))
-  console.log('📊 BULK GENERATION SUMMARY')
-  console.log('='.repeat(50))
-  console.log(`✅ Successfully created: ${results.success.length}`)
-  console.log(`⏭️  Skipped (already exist): ${results.skipped.length}`)
-  console.log(`❌ Failed: ${results.failed.length}`)
+  console.log(`\n✅ Successfully generated ${generatedPosts.length} blog posts!`)
+  console.log(`📁 Posts saved to: content/blog/`)
+  console.log(`🌐 Run 'npm run dev' to view your posts at http://localhost:3000/blog`)
   
-  if (results.success.length > 0) {
-    console.log('\n🎉 Successfully generated posts:')
-    results.success.forEach(post => {
-      console.log(`   • ${post.title || post.topic}`)
+  // Display tag distribution
+  const tagCounts = {}
+  generatedPosts.forEach(post => {
+    post.tags.forEach(tag => {
+      tagCounts[tag] = (tagCounts[tag] || 0) + 1
     })
-  }
-  
-  if (results.failed.length > 0) {
-    console.log('\n❌ Failed posts:')
-    results.failed.forEach(post => {
-      console.log(`   • ${post.topic || 'Unknown'}: ${post.error || post.reason}`)
-    })
-  }
-  
-  return results
-}
-
-// Daily content generation presets
-const DAILY_PRESETS = {
-  light: 3,    // 3 posts per day
-  medium: 10,  // 10 posts per day  
-  heavy: 25,   // 25 posts per day
-  extreme: 50  // 50 posts per day
-}
-
-async function generateDailyContent(preset = 'light', options = {}) {
-  const count = DAILY_PRESETS[preset] || parseInt(preset) || 3
-  
-  console.log(`📅 Daily content generation: ${preset} preset (${count} posts)`)
-  
-  return await generateBulkContent(count, {
-    ...options,
-    type: 'mixed',
-    author: 'Daily Auto Generator'
   })
+  
+  console.log(`\n📊 Tag Distribution:`)
+  Object.entries(tagCounts)
+    .sort(([,a], [,b]) => b - a)
+    .forEach(([tag, count]) => {
+      console.log(`   ${tag}: ${count} post${count !== 1 ? 's' : ''}`)
+    })
 }
 
-// Command line interface
+// Run the script
 if (require.main === module) {
-  const args = process.argv.slice(2)
-  
-  if (args.includes('--help') || args.includes('-h')) {
-    console.log(`
-Usage: node bulk-generate.js [options]
-
-Options:
-  --count N               Number of posts to generate (default: 5)
-  --type TYPE             Post type: tutorial|guide|news|mixed (default: mixed)
-  --author "Name"         Author name (default: Content Generator)
-  --preset PRESET         Daily preset: light|medium|heavy|extreme
-  --dry-run              Show what would be generated without creating files
-  --help, -h             Show this help message
-
-Presets:
-  light   = 3 posts    (good for starting out)
-  medium  = 10 posts   (steady content flow)
-  heavy   = 25 posts   (high-volume content)
-  extreme = 50 posts   (maximum generation)
-
-Examples:
-  node bulk-generate.js --count 10
-  node bulk-generate.js --preset medium --type tutorial
-  node bulk-generate.js --count 5 --dry-run
-  node bulk-generate.js --preset heavy --author "Tech Team"
-    `)
-    process.exit(0)
-  }
-  
-  // Parse arguments
-  const options = {}
-  let count = 5
-  let preset = null
-  
-  for (let i = 0; i < args.length; i++) {
-    const arg = args[i]
-    const value = args[i + 1]
-    
-    switch (arg) {
-      case '--count':
-        count = parseInt(value) || 5
-        i++
-        break
-      case '--type':
-        options.type = value
-        i++
-        break
-      case '--author':
-        options.author = value
-        i++
-        break
-      case '--preset':
-        preset = value
-        i++
-        break
-      case '--dry-run':
-        options.dryRun = true
-        break
-    }
-  }
-  
-  // Execute generation
-  async function main() {
-    if (preset) {
-      await generateDailyContent(preset, options)
-    } else {
-      await generateBulkContent(count, options)
-    }
-  }
-  
-  main().catch(console.error)
+  generateBulkContent().catch(console.error)
 }
 
-module.exports = { generateBulkContent, generateDailyContent }
+module.exports = { generateBulkContent, contentScenarios }
