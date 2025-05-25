@@ -1,0 +1,329 @@
+---
+title: "Getting Started with Next.js: A Complete Developer's Guide"
+slug: "getting-started-nextjs"
+date: "2025-05-25"
+excerpt: "Learn how to build modern web applications with Next.js. This comprehensive guide covers setup, routing, API routes, and deployment best practices."
+tags: ["nextjs", "react", "javascript", "tutorial", "web-development"]
+related: ["react-hooks-guide", "typescript-best-practices"]
+author: "Tech Writer"
+type: "tutorial"
+---
+
+# Getting Started with Next.js: A Complete Developer's Guide
+
+Next.js has revolutionized how we build React applications by providing a powerful framework that handles many complexities out of the box. Whether you're building a simple blog or a complex web application, Next.js offers the tools and optimizations you need.
+
+## What is Next.js?
+
+Next.js is a React framework that provides infrastructure and simple development experience for server-side rendered applications. It's created by Vercel and has become the go-to choice for React developers worldwide.
+
+### Key Features
+
+- **Server-Side Rendering (SSR)** - Pre-render pages on the server
+- **Static Site Generation (SSG)** - Generate static HTML at build time  
+- **API Routes** - Build API endpoints alongside your frontend
+- **File-based Routing** - Automatic routing based on file structure
+- **Image Optimization** - Automatic image optimization and lazy loading
+- **Performance Optimizations** - Built-in performance optimizations
+
+## Installation and Setup
+
+Let's start by creating a new Next.js project:
+
+```bash
+npx create-next-app@latest my-blog --typescript --tailwind --eslint
+cd my-blog
+npm run dev
+```
+
+This command creates a new Next.js project with:
+- TypeScript support
+- Tailwind CSS for styling
+- ESLint for code quality
+
+## Project Structure
+
+Your new Next.js project will have this structure:
+
+```
+my-blog/
+├── app/
+│   ├── globals.css
+│   ├── layout.tsx
+│   └── page.tsx
+├── public/
+├── next.config.js
+├── package.json
+└── tailwind.config.js
+```
+
+## Understanding App Router
+
+Next.js 13+ uses the App Router, which is built on React Server Components. Here's how routing works:
+
+### Creating Pages
+
+Create a new page by adding a `page.tsx` file in a folder:
+
+```typescript
+// app/about/page.tsx
+export default function About() {
+  return (
+    <div>
+      <h1>About Us</h1>
+      <p>Welcome to our blog!</p>
+    </div>
+  )
+}
+```
+
+### Dynamic Routes
+
+Create dynamic routes using square brackets:
+
+```typescript
+// app/blog/[slug]/page.tsx
+interface PageProps {
+  params: {
+    slug: string
+  }
+}
+
+export default function BlogPost({ params }: PageProps) {
+  return (
+    <div>
+      <h1>Blog Post: {params.slug}</h1>
+    </div>
+  )
+}
+```
+
+## API Routes
+
+Next.js allows you to create API endpoints easily:
+
+```typescript
+// app/api/posts/route.ts
+import { NextResponse } from 'next/server'
+
+export async function GET() {
+  const posts = [
+    { id: 1, title: 'First Post', slug: 'first-post' },
+    { id: 2, title: 'Second Post', slug: 'second-post' }
+  ]
+  
+  return NextResponse.json(posts)
+}
+
+export async function POST(request: Request) {
+  const body = await request.json()
+  // Handle POST request
+  return NextResponse.json({ message: 'Post created', data: body })
+}
+```
+
+## Data Fetching
+
+Next.js provides several methods for data fetching:
+
+### Server Components (Default)
+
+```typescript
+async function getPosts() {
+  const res = await fetch('https://api.example.com/posts')
+  return res.json()
+}
+
+export default async function Blog() {
+  const posts = await getPosts()
+  
+  return (
+    <div>
+      {posts.map(post => (
+        <article key={post.id}>
+          <h2>{post.title}</h2>
+          <p>{post.excerpt}</p>
+        </article>
+      ))}
+    </div>
+  )
+}
+```
+
+### Client Components
+
+For interactive components, use the `'use client'` directive:
+
+```typescript
+'use client'
+
+import { useState, useEffect } from 'react'
+
+export default function ClientComponent() {
+  const [data, setData] = useState(null)
+  
+  useEffect(() => {
+    fetch('/api/data')
+      .then(res => res.json())
+      .then(setData)
+  }, [])
+  
+  return (
+    <div>
+      {data ? <p>{data.message}</p> : <p>Loading...</p>}
+    </div>
+  )
+}
+```
+
+## Styling with Tailwind CSS
+
+Next.js works seamlessly with Tailwind CSS:
+
+```typescript
+export default function StyledComponent() {
+  return (
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-3xl font-bold text-gray-900 mb-4">
+        Styled with Tailwind
+      </h1>
+      <p className="text-gray-600 leading-relaxed">
+        This component uses Tailwind utility classes for styling.
+      </p>
+      <button className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+        Click Me
+      </button>
+    </div>
+  )
+}
+```
+
+## Performance Optimization
+
+### Image Optimization
+
+Use the Next.js Image component for automatic optimization:
+
+```typescript
+import Image from 'next/image'
+
+export default function OptimizedImage() {
+  return (
+    <Image
+      src="/hero.jpg"
+      alt="Hero image"
+      width={800}
+      height={400}
+      priority
+      className="rounded-lg"
+    />
+  )
+}
+```
+
+### Font Optimization
+
+Optimize web fonts using next/font:
+
+```typescript
+import { Inter } from 'next/font/google'
+
+const inter = Inter({ subsets: ['latin'] })
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <html lang="en">
+      <body className={inter.className}>{children}</body>
+    </html>
+  )
+}
+```
+
+## Deployment
+
+Deploy your Next.js app to Vercel with zero configuration:
+
+```bash
+npm install -g vercel
+vercel
+```
+
+Or deploy to other platforms:
+
+- **Netlify**: Use the `@netlify/plugin-nextjs` plugin
+- **AWS**: Use AWS Amplify or deploy to EC2
+- **Digital Ocean**: Use App Platform
+- **Railway**: Connect your GitHub repository
+
+## Best Practices
+
+### 1. Use Server Components by Default
+Only use Client Components when you need interactivity or browser APIs.
+
+### 2. Optimize Images and Fonts
+Always use Next.js's built-in optimization features.
+
+### 3. Implement Proper Error Handling
+Create custom error pages and handle API errors gracefully.
+
+### 4. Use TypeScript
+TypeScript provides better developer experience and catches errors early.
+
+### 5. Follow SEO Best Practices
+Use proper meta tags, structured data, and semantic HTML.
+
+## Common Patterns
+
+### Layout Pattern
+
+```typescript
+// app/blog/layout.tsx
+export default function BlogLayout({
+  children,
+}: {
+  children: React.ReactNode
+}) {
+  return (
+    <div className="max-w-4xl mx-auto">
+      <nav className="mb-8">
+        <h1>My Blog</h1>
+      </nav>
+      <main>{children}</main>
+    </div>
+  )
+}
+```
+
+### Loading States
+
+```typescript
+// app/blog/loading.tsx
+export default function Loading() {
+  return (
+    <div className="animate-pulse">
+      <div className="h-8 bg-gray-300 rounded mb-4"></div>
+      <div className="h-4 bg-gray-300 rounded mb-2"></div>
+      <div className="h-4 bg-gray-300 rounded"></div>
+    </div>
+  )
+}
+```
+
+## Conclusion
+
+Next.js provides a robust foundation for building modern web applications. Its combination of performance optimizations, developer experience improvements, and flexible rendering strategies makes it an excellent choice for projects of all sizes.
+
+Start with the basics, experiment with different features, and gradually incorporate more advanced patterns as your application grows. The Next.js ecosystem is rich with tools and resources to help you build amazing web experiences.
+
+## Next Steps
+
+- Explore the [Next.js documentation](https://nextjs.org/docs)
+- Try building a small project with the concepts covered here
+- Learn about advanced features like middleware and edge runtime
+- Experiment with different deployment options
+
+Happy coding with Next.js!
