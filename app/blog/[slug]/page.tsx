@@ -21,6 +21,16 @@ interface PageProps {
   }
 }
 
+// Utility function for consistent date formatting
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
+
 // Get all blog posts
 function getAllPosts(): { slug: string; frontMatter: BlogPost }[] {
   const contentDir = path.join(process.cwd(), 'content/blog')
@@ -171,11 +181,12 @@ function RelatedPosts({ currentPost, currentSlug }: { currentPost: BlogPost, cur
     relatedPosts = [...relatedPosts, ...additionalPosts].slice(0, 6)
   }
   
-  // Randomize the display order to add variety
-  const shuffledPosts = [...relatedPosts].sort(() => Math.random() - 0.5)
+  // Use deterministic ordering instead of random to avoid hydration issues
+  // Sort by title for consistent ordering
+  const sortedPosts = [...relatedPosts].sort((a, b) => a.frontMatter.title.localeCompare(b.frontMatter.title))
   
-  // Show 2-3 posts by default, but allow expansion
-  const displayPosts = shuffledPosts.slice(0, 3)
+  // Show first 3 posts consistently
+  const displayPosts = sortedPosts.slice(0, 3)
   
   if (displayPosts.length === 0) return null
   
@@ -202,7 +213,7 @@ function RelatedPosts({ currentPost, currentSlug }: { currentPost: BlogPost, cur
         ))}
       </div>
       
-      {shuffledPosts.length > 3 && (
+      {sortedPosts.length > 3 && (
         <div className="mt-4 text-center">
           <Link 
             href="/blog" 
@@ -252,11 +263,7 @@ export default function BlogPost({ params }: PageProps) {
         <h1 className="text-4xl font-bold mb-4">{frontMatter.title}</h1>
         <div className="flex flex-wrap items-center gap-4 text-gray-600 mb-4">
           <time dateTime={frontMatter.date}>
-            {new Date(frontMatter.date).toLocaleDateString('en-US', {
-              year: 'numeric',
-              month: 'long',
-              day: 'numeric'
-            })}
+            {formatDate(frontMatter.date)}
           </time>
           {frontMatter.author && (
             <span>by {frontMatter.author}</span>

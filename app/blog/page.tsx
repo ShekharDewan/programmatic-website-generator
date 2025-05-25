@@ -3,7 +3,6 @@ import path from 'path'
 import matter from 'gray-matter'
 import Link from 'next/link'
 import { Metadata } from 'next'
-import { Suspense } from 'react'
 
 interface BlogPost {
   title: string
@@ -21,6 +20,16 @@ interface BlogIndexProps {
 export const metadata: Metadata = {
   title: 'Blog - All Posts',
   description: 'Browse all blog posts and articles',
+}
+
+// Utility function for consistent date formatting
+function formatDate(dateString: string): string {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
 }
 
 function getAllPosts(): { slug: string; frontMatter: BlogPost }[] {
@@ -51,7 +60,7 @@ function getAllPosts(): { slug: string; frontMatter: BlogPost }[] {
   )
 }
 
-function BlogContent({ searchParams }: BlogIndexProps) {
+export default function BlogIndex({ searchParams }: BlogIndexProps) {
   const allPosts = getAllPosts()
   const selectedTag = searchParams.tag
   
@@ -152,11 +161,7 @@ function BlogContent({ searchParams }: BlogIndexProps) {
                 </p>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
                   <time dateTime={frontMatter.date}>
-                    {new Date(frontMatter.date).toLocaleDateString('en-US', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
+                    {formatDate(frontMatter.date)}
                   </time>
                   {frontMatter.author && <span>by {frontMatter.author}</span>}
                   {frontMatter.tags && (
@@ -187,17 +192,9 @@ function BlogContent({ searchParams }: BlogIndexProps) {
       {/* Stats */}
       <footer className="mt-12 pt-8 border-t border-gray-200 text-center">
         <p className="text-gray-500 text-sm">
-          Last updated: {new Date().toLocaleDateString()}
+          {posts.length} total articles
         </p>
       </footer>
     </div>
-  )
-}
-
-export default function BlogIndex({ searchParams }: BlogIndexProps) {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <BlogContent searchParams={searchParams} />
-    </Suspense>
   )
 }
